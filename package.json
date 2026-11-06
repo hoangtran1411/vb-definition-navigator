@@ -2,7 +2,7 @@
   "name": "vb-definition-navigator",
   "displayName": "VB Definition & References Navigator",
   "description": "Go to Definition (F12), Find All References (Shift+F12), and Reference Count CodeLens for Visual Basic (VB6, VBA, VB.NET)",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "local-dev",
   "repository": {
     "type": "git",

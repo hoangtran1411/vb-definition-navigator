@@ -56,6 +56,22 @@ End Function
 - Right-click any function or sub identifier and select **Find All References** or press `Shift + F12`.
 - Inspect all occurrences grouped by file in the VS Code References pane.
 
+### 4. Document Outline & Breadcrumbs (`Ctrl + Shift + O`)
+- Automatic hierarchy displayed in the **Outline View** in the sidebar.
+- Navigation breadcrumbs at the top of the editor (`Module.bas > Sub CalculateSalary`).
+- Press **`Ctrl + Shift + O`** (or `Cmd + Shift + O` on macOS) to instantly search and jump to any procedure in the current file.
+
+### 5. Rich Hover Tooltip
+- Hover over any procedure call anywhere in the project to see:
+  - Full declaration signature with parameters and return types.
+  - Multi-line continuation support (`_`).
+  - Preceding documentation comments (`'` or `Rem`).
+  - Originating file and line number.
+
+### 6. Safe Symbol Rename (`F2`)
+- Place cursor on any procedure name and press **`F2`**.
+- Validates the new identifier name and safely updates the declaration and all call sites across the entire workspace in one atomic operation.
+
 ---
 
 ## ⚡ Performance Architecture
@@ -89,6 +105,8 @@ Unlike simple regex-based extensions that read files from disk on every cursor m
 | **Go to Definition** | `F12` | `F12` |
 | **Peek Definition** | `Alt + F12` | `⌥ + F12` |
 | **Find All References** | `Shift + F12` | `⇧ + F12` |
+| **Rename Symbol** | `F2` | `F2` |
+| **File Outline / Breadcrumbs** | `Ctrl + Shift + O` | `⇧ + ⌘ + O` |
 
 ---
 
@@ -123,7 +141,7 @@ You can customize these in your `settings.json`:
 No Azure account, marketplace registration, or credit card required:
 
 ```pwsh
-code --install-extension vb-definition-navigator-0.1.1.vsix
+code --install-extension vb-definition-navigator-0.2.0.vsix
 ```
 
 ### Build from Source
