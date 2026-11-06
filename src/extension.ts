@@ -3,6 +3,7 @@ import { WorkspaceIndexManager } from './indexManager';
 import { VbDefinitionProvider } from './definition';
 import { VbReferenceProvider } from './reference';
 import { VbCodeLensProvider } from './codelens';
+import { VbDocumentSymbolProvider } from './outline';
 
 export function activate(context: vscode.ExtensionContext) {
   const indexManager = WorkspaceIndexManager.getInstance();
@@ -31,7 +32,12 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerCodeLensProvider(selector, codeLensProvider)
   );
 
-  // 5. Update index when a file is saved
+  // 5. Document Symbol Provider (Outline & Breadcrumbs)
+  context.subscriptions.push(
+    vscode.languages.registerDocumentSymbolProvider(selector, new VbDocumentSymbolProvider())
+  );
+
+  // 6. Update index when a file is saved
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument(async (doc) => {
       if (vscode.languages.match(selector, doc)) {
