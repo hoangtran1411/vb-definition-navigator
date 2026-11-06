@@ -49,7 +49,9 @@ Modern IDE navigation in VS Code relies on three decoupled provider interfaces:
 ## 2. The Performance Engineering Journey
 
 ### The Naive Disk-Bound Anti-Pattern (Before)
+
 Initially, whenever CodeLens or Go to Definition executed:
+
 1. It queried `vscode.workspace.findFiles()`.
 2. It called `vscode.workspace.openTextDocument(uri)` across every workspace file in a loop.
 3. It scanned every line using regular expressions.
@@ -65,7 +67,7 @@ For a file with **30 functions** in a **50-file** project, this created **1,500 
 To achieve **< 2ms response times**, the engine was redesigned into a **Memory-Resident Index**:
 
 | Phase | Strategy | Time Complexity |
-|---|---|---|
+| --- | --- | --- |
 | **Startup Ingestion** | Background parallel read of all VB files via raw byte streams (`fs.readFile`) into RAM | $O(TotalBytes)$ once on startup |
 | **Go to Definition (`F12`)** | Pre-parsed into `Map<string, Location[]>` | **$O(1)$** instant hash map lookup (< 0.001 ms) |
 | **Reference Search** | String pre-filtering via V8 C++ SIMD `includes()` | Discards 95%+ of files in < 0.1 ms |
@@ -113,6 +115,7 @@ Target Symbol: "CalculateTotal"
 ```
 
 ### Stage 4 Code Implementation (Comment Stripping)
+
 ```typescript
 export function isInsideComment(lineText: string, matchIndex: number): boolean {
   let inString = false;
@@ -150,6 +153,7 @@ watcher.onDidDelete((uri) => this.removeFile(uri));
 ```
 
 When `indexFile(uri)` runs:
+
 1. It cleans out only the symbols that were previously declared in that specific URI.
 2. It re-reads that single file into RAM.
 3. It updates the hash map entries for those symbols.
@@ -177,15 +181,18 @@ When building tooling for other legacy or custom languages (e.g., COBOL, FoxPro,
 
 VS Code extensions can be packaged into offline, standalone installers without needing an Azure account, credit card, or Marketplace registration:
 
-### Packaging Command:
+### Packaging Command
+
 ```pwsh
 npx @vscode/vsce package --no-git-tag-version
 ```
 
-### Installing the `.vsix` on any machine:
+### Installing the `.vsix` on any machine
+
 ```pwsh
 code --install-extension vb-definition-navigator-0.1.1.vsix
 ```
 
 Or via VS Code GUI:
+
 - Open **Extensions** (`Ctrl+Shift+X`) $\rightarrow$ Click `...` $\rightarrow$ **Install from VSIX...**
