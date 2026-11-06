@@ -4,6 +4,7 @@ import { VbDefinitionProvider } from './definition';
 import { VbReferenceProvider } from './reference';
 import { VbCodeLensProvider } from './codelens';
 import { VbDocumentSymbolProvider } from './outline';
+import { VbHoverProvider } from './hover';
 
 export function activate(context: vscode.ExtensionContext) {
   const indexManager = WorkspaceIndexManager.getInstance();
@@ -37,7 +38,12 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerDocumentSymbolProvider(selector, new VbDocumentSymbolProvider())
   );
 
-  // 6. Update index when a file is saved
+  // 6. Hover Provider (Signature & Docs Tooltip)
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(selector, new VbHoverProvider())
+  );
+
+  // 7. Update index when a file is saved
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument(async (doc) => {
       if (vscode.languages.match(selector, doc)) {

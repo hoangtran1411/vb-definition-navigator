@@ -152,6 +152,13 @@ export class WorkspaceIndexManager {
   }
 
   /**
+   * Returns cached lines for a given file URI without touching disk.
+   */
+  public getFileLines(uri: vscode.Uri): string[] | undefined {
+    return this.fileCache.get(uri.toString())?.lines;
+  }
+
+  /**
    * O(1) Instant Go to Definition from memory.
    */
   public getDefinitions(symbolName: string): vscode.Location[] {
