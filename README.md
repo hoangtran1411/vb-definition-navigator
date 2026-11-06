@@ -17,6 +17,7 @@ Developing and maintaining legacy Visual Basic / VBA systems (e.g., Microsoft Ac
 ## ✨ Features
 
 ### 1. Go to Definition (`F12`)
+
 - Place cursor on any procedure or function call and press `F12`.
 - Automatically jumps to:
   - `Sub <Name>`
@@ -35,6 +36,7 @@ End Function
 ```
 
 ### 2. Reference Count CodeLens
+
 - Displays an interactive reference count badge directly above every procedure declaration.
 - Shows real-time usage across the entire workspace (e.g., `4 references` or `0 references`).
 - **Interactive Peek View**: Clicking on the badge displays an interactive preview of all call sites.
@@ -50,6 +52,7 @@ End Function
 ```
 
 ### 3. Find All References (`Shift + F12`)
+
 - Right-click any function or sub identifier and select **Find All References** or press `Shift + F12`.
 - Inspect all occurrences grouped by file in the VS Code References pane.
 
@@ -70,7 +73,7 @@ End Function
 ## ⌨️ Keyboard Shortcuts
 
 | Command | Shortcut (Windows/Linux) | Shortcut (macOS) |
-|---------|--------------------------|------------------|
+| --------- | -------------------------- | ------------------ |
 | **Go to Definition** | `F12` | `F12` |
 | **Peek Definition** | `Alt + F12` | `⌥ + F12` |
 | **Find All References** | `Shift + F12` | `⇧ + F12` |
@@ -87,6 +90,7 @@ This extension contributes the following configurable settings:
 | `vbDefinitionNavigator.fileGlob` | `string` | `"**/*.{bas,cls,frm,vb,vbs}"` | File glob pattern specifying which files to scan across the workspace. |
 
 You can customize these in your `settings.json`:
+
 ```json
 {
   "vbDefinitionNavigator.enableCodeLens": true,
@@ -99,15 +103,19 @@ You can customize these in your `settings.json`:
 ## 🚀 Getting Started & Development
 
 ### 1. Run in Development Mode
+
 1. Clone or open the project folder in VS Code:
+
    ```pwsh
    cd E:\Workspace\Dev\tools\vs-code-extension\vb-definition-navigator
    npm install
    ```
+
 2. Press **`F5`** to launch a new **Extension Development Host** window.
 3. Open any directory with `.bas`, `.cls`, or `.vb` files to test navigation and CodeLens.
 
 ### 2. Package and Install Locally (`.vsix`)
+
 ```pwsh
 npm install -g @vscode/vsce
 vsce package
