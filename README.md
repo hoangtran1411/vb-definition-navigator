@@ -72,6 +72,17 @@ End Function
 - Place cursor on any procedure name and press **`F2`**.
 - Validates the new identifier name and safely updates the declaration and all call sites across the entire workspace in one atomic operation.
 
+### 7. Parameter Hints (`SignatureHelp`)
+- Triggers automatically when typing `(` or `,` in procedure calls.
+- Highlights the active parameter in bold as you type commas.
+
+### 8. Access 97 VNI ↔ UTF-8 Bidirectional Translator
+- **On-Hover Decoding**: Hover over any VNI-encoded string (e.g. `"Tieàn löông"`) or comment to view decoded Vietnamese UTF-8.
+- **Auto-Decoded Docstrings**: Legacy VNI comments above functions are automatically decoded in the hover tooltip.
+- **Bidirectional Selection Commands**:
+  - Right-click selected text $\rightarrow$ **VB: Convert Selection (VNI -> UTF-8)**
+  - Right-click selected text $\rightarrow$ **VB: Convert Selection (UTF-8 -> Access 97 VNI)**
+
 ---
 
 ## ⚡ Performance Architecture
@@ -110,11 +121,13 @@ Unlike simple regex-based extensions that read files from disk on every cursor m
 
 ---
 
-## 🛠️ Commands (Command Palette)
+## 🛠️ Commands (Command Palette & Context Menu)
 
-Press `Ctrl + Shift + P` (or `Cmd + Shift + P` on macOS) to access:
+Press `Ctrl + Shift + P` (or right-click with selected text):
 
 - `VB: Reindex Workspace` — Manually triggers a complete re-scan and cache refresh across all VB workspace files.
+- `VB: Convert Selection (VNI -> UTF-8)` — Translates selected legacy VNI text to modern Vietnamese UTF-8.
+- `VB: Convert Selection (UTF-8 -> Access 97 VNI)` — Encodes selected Vietnamese text back into legacy VNI-Windows for Access 97 database compatibility.
 
 ---
 
@@ -141,7 +154,7 @@ You can customize these in your `settings.json`:
 No Azure account, marketplace registration, or credit card required:
 
 ```pwsh
-code --install-extension vb-definition-navigator-0.2.0.vsix
+code --install-extension vb-definition-navigator-0.3.0.vsix
 ```
 
 ### Build from Source

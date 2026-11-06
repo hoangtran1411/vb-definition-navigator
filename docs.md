@@ -14,6 +14,8 @@ This document captures the technical architecture, performance engineering princ
    - [5.1 Document Symbol & Outline Provider](#51-document-symbol--outline-provider-outline-view--breadcrumbs)
    - [5.2 Zero-I/O Rich Hover Provider](#52-zero-io-rich-hover-provider-signatures--doc-comments)
    - [5.3 Safe Workspace-Wide Rename Engine](#53-safe-workspace-wide-rename-engine-f2)
+   - [5.4 Parameter Hints & Signature Help](#54-parameter-hints--signature-help)
+   - [5.5 Access 97 VNI ↔ UTF-8 Bidirectional Translation](#55-access-97-vni--utf-8-bidirectional-translation)
 6. [Key Reusable Patterns for VS Code Extensions](#6-key-reusable-patterns-for-vs-code-extensions)
 7. [Offline Packaging & Distribution (.VSIX)](#7-offline-packaging--distribution-vsix)
 
@@ -235,6 +237,40 @@ The `VbRenameProvider` implements a two-phase rename contract:
    - **Syntax Validation**: Ensures `newName` satisfies Visual Basic identifier rules (`/^[a-zA-Z_][a-zA-Z0-9_]*$/`).
    - **Cross-File Collection**: Calls `indexManager.findReferences(oldName, undefined, -1, true)` with `includeDeclaration: true` to collect every declaration and call site.
    - **Atomic WorkspaceEdit**: Constructs a `vscode.WorkspaceEdit` containing replacements across all affected URIs. VS Code applies all edits atomically in a single undo step.
+
+---
+
+### 5.4 Parameter Hints & Signature Help
+
+The `VbSignatureHelpProvider` triggers on `(` and `,` to guide developers through complex Visual Basic procedure arguments:
+
+1. **Backwards Call Context Scanning**:
+   - Scans backward from cursor position, tracking parenthesis depth `(` / `)` and comma separators outside of string literals.
+   - Extracts the procedure identifier preceding the opening parenthesis.
+2. **Signature & Parameter Decomposition**:
+   - Retrieves the full signature from the in-memory cache without hitting the disk.
+   - Extracts and splits comma-separated arguments inside `(...)` into `vscode.ParameterInformation` elements.
+3. **Active Parameter Indexing**:
+   - Calculates the active argument based on comma count, clamped to the parameter count.
+
+---
+
+### 5.5 Access 97 VNI ↔ UTF-8 Bidirectional Translation
+
+Visual Basic applications in Microsoft Access 97 store Vietnamese characters using the legacy **VNI-Windows-1258** font encoding (`Tieàn löông`, `Nhaân vieân`), creating unreadable text in modern UTF-8 environments.
+
+The extension introduces a domain-specific bidirectional converter (`src/vniConverter.ts`):
+
+1. **VNI Hover Decoding**:
+   - Automatically detects whether the hovered string literal or comment contains characteristic VNI sequences (`aø`, `aù`, `eâø`, `oâù`, `öù`, `ñ`, etc.).
+   - Renders an inline Markdown tooltip with the decoded UTF-8 Vietnamese translation:
+     > **🇻🇳 Access 97 VNI Decoded:**
+     > *Tiền lương nhân viên*
+2. **Auto-Decoding Doc Comments**:
+   - Any legacy VNI documentation comments written above procedure headers are automatically translated to readable UTF-8 in procedure hover tooltips.
+3. **Bidirectional Editor Conversion Commands**:
+   - **`VB: Convert Selection (VNI -> UTF-8)`**: Decodes legacy VNI strings in selected text into modern UTF-8.
+   - **`VB: Convert Selection (UTF-8 -> Access 97 VNI)`**: Encodes modern UTF-8 Vietnamese text back into legacy VNI-Windows format for compatibility with Access 97 Jet 3.5 databases.
 
 ---
 
