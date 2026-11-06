@@ -1,0 +1,62 @@
+{
+  "name": "vb-definition-navigator",
+  "displayName": "VB Definition & References Navigator",
+  "description": "Go to Definition (F12), Find All References (Shift+F12), and Reference Count CodeLens for Visual Basic (VB6, VBA, VB.NET)",
+  "version": "0.1.0",
+  "publisher": "local-dev",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:vb",
+    "onLanguage:vba"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "vb",
+        "extensions": [
+          ".vb",
+          ".bas",
+          ".cls",
+          ".frm",
+          ".vbs"
+        ],
+        "aliases": [
+          "Visual Basic",
+          "VB",
+          "VBA"
+        ]
+      }
+    ],
+    "configuration": {
+      "title": "VB Definition & References Navigator",
+      "properties": {
+        "vbDefinitionNavigator.enableCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable reference count CodeLens above VB procedures."
+        },
+        "vbDefinitionNavigator.fileGlob": {
+          "type": "string",
+          "default": "**/*.{bas,cls,frm,vb,vbs}",
+          "description": "Glob pattern of VB files to scan across the workspace."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.3"
+  }
+}
