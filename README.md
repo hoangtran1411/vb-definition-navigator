@@ -126,7 +126,7 @@ code --install-extension vb-definition-navigator-0.1.0.vsix
 
 ## 🤝 Contributing
 
-Contributions, bug reports, and suggestions are welcome! Please read our [Contribution Guidelines](./CONTRIBUTOR.md) for details on code style, architecture, and the pull request process.
+Contributions, bug reports, and suggestions are welcome! Please read our [Contribution Guidelines](./CONTRIBUTING.md) for details on code style, architecture, and the pull request process.
 
 ---
 
