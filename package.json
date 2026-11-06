@@ -51,6 +51,34 @@
           "description": "Glob pattern of VB files to scan across the workspace."
         }
       }
+    },
+    "commands": [
+      {
+        "command": "vbDefinitionNavigator.reindexWorkspace",
+        "title": "VB: Reindex Workspace"
+      },
+      {
+        "command": "vbDefinitionNavigator.convertVniToUnicode",
+        "title": "VB: Convert Selection (VNI -> UTF-8)"
+      },
+      {
+        "command": "vbDefinitionNavigator.convertUnicodeToVni",
+        "title": "VB: Convert Selection (UTF-8 -> Access 97 VNI)"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "vbDefinitionNavigator.convertVniToUnicode",
+          "when": "editorHasSelection && editorLangId == vb",
+          "group": "modification"
+        },
+        {
+          "command": "vbDefinitionNavigator.convertUnicodeToVni",
+          "when": "editorHasSelection && editorLangId == vb",
+          "group": "modification"
+        }
+      ]
     }
   },
   "scripts": {

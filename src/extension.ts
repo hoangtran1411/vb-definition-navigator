@@ -7,6 +7,7 @@ import { VbDocumentSymbolProvider } from './outline';
 import { VbHoverProvider } from './hover';
 import { VbRenameProvider } from './rename';
 import { VbSignatureHelpProvider } from './signatureHelp';
+import { vniToUnicode, unicodeToVni } from './vniConverter';
 
 export function activate(context: vscode.ExtensionContext) {
   const indexManager = WorkspaceIndexManager.getInstance();
@@ -70,12 +71,48 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // 6. Manual refresh command
+  // 10. Manual refresh command
   context.subscriptions.push(
     vscode.commands.registerCommand('vbDefinitionNavigator.reindexWorkspace', async () => {
       await indexManager.initialize(context);
       codeLensProvider.refresh();
       vscode.window.showInformationMessage('VB Workspace Index refreshed.');
+    })
+  );
+
+  // 11. Command: Convert Selection VNI -> Unicode UTF-8
+  context.subscriptions.push(
+    vscode.commands.registerCommand('vbDefinitionNavigator.convertVniToUnicode', () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) return;
+
+      const selections = editor.selections;
+      editor.edit((editBuilder) => {
+        for (const sel of selections) {
+          const text = editor.document.getText(sel);
+          if (text) {
+            editBuilder.replace(sel, vniToUnicode(text));
+          }
+        }
+      });
+    })
+  );
+
+  // 12. Command: Convert Selection Unicode UTF-8 -> Access 97 VNI
+  context.subscriptions.push(
+    vscode.commands.registerCommand('vbDefinitionNavigator.convertUnicodeToVni', () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) return;
+
+      const selections = editor.selections;
+      editor.edit((editBuilder) => {
+        for (const sel of selections) {
+          const text = editor.document.getText(sel);
+          if (text) {
+            editBuilder.replace(sel, unicodeToVni(text));
+          }
+        }
+      });
     })
   );
 }
