@@ -6,6 +6,7 @@ import { VbCodeLensProvider } from './codelens';
 import { VbDocumentSymbolProvider } from './outline';
 import { VbHoverProvider } from './hover';
 import { VbRenameProvider } from './rename';
+import { VbSignatureHelpProvider } from './signatureHelp';
 
 export function activate(context: vscode.ExtensionContext) {
   const indexManager = WorkspaceIndexManager.getInstance();
@@ -49,7 +50,17 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerRenameProvider(selector, new VbRenameProvider())
   );
 
-  // 8. Update index when a file is saved
+  // 8. Signature Help Provider (Parameter Hints)
+  context.subscriptions.push(
+    vscode.languages.registerSignatureHelpProvider(
+      selector,
+      new VbSignatureHelpProvider(),
+      '(',
+      ','
+    )
+  );
+
+  // 9. Update index when a file is saved
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument(async (doc) => {
       if (vscode.languages.match(selector, doc)) {
