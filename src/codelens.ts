@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { PROCEDURE_DECLARATION_REGEX, isCodeLensEnabled } from './utils';
-import { VbReferenceProvider } from './reference';
+import { WorkspaceIndexManager } from './indexManager';
 
 export class VbCodeLens extends vscode.CodeLens {
   constructor(
@@ -48,24 +48,28 @@ export class VbCodeLensProvider implements vscode.CodeLensProvider {
     return codeLenses;
   }
 
-  async resolveCodeLens(
+  resolveCodeLens(
     codeLens: vscode.CodeLens,
     token: vscode.CancellationToken
-  ): Promise<vscode.CodeLens> {
+  ): vscode.CodeLens {
     if (!(codeLens instanceof VbCodeLens)) {
       return codeLens;
     }
 
     const { symbolName, documentUri, range } = codeLens;
+    const index = WorkspaceIndexManager.getInstance();
 
-    // Find references excluding the declaration itself
-    const locations = await VbReferenceProvider.findReferences(
+    // Fast in-memory reference counting
+    const locations = index.findReferences(
       symbolName,
       documentUri,
       range.start.line,
-      false, // exclude declaration
-      token
+      false // exclude definition line itself
     );
+
+    if (token.isCancellationRequested) {
+      return codeLens;
+    }
 
     const count = locations.length;
     const label = count === 1 ? '1 reference' : `${count} references`;

@@ -1,57 +1,52 @@
 import * as vscode from 'vscode';
+import { WorkspaceIndexManager } from './indexManager';
 import { VbDefinitionProvider } from './definition';
 import { VbReferenceProvider } from './reference';
 import { VbCodeLensProvider } from './codelens';
 
 export function activate(context: vscode.ExtensionContext) {
-  const outputChannel = vscode.window.createOutputChannel('VB Definition Navigator');
-  outputChannel.appendLine('VB Definition & References Navigator is now active.');
+  const indexManager = WorkspaceIndexManager.getInstance();
+
+  // 1. Kick off background workspace indexing (non-blocking)
+  indexManager.initialize(context);
 
   const selector: vscode.DocumentSelector = [
     { scheme: 'file', language: 'vb' },
     { scheme: 'file', pattern: '**/*.{bas,cls,frm,vb,vbs}' }
   ];
 
-  // 1. Definition Provider (F12)
-  const defProvider = new VbDefinitionProvider();
+  // 2. Definition Provider (F12) - now O(1) in-memory lookup
   context.subscriptions.push(
-    vscode.languages.registerDefinitionProvider(selector, defProvider)
+    vscode.languages.registerDefinitionProvider(selector, new VbDefinitionProvider())
   );
 
-  // 2. Reference Provider (Shift+F12)
-  const refProvider = new VbReferenceProvider();
+  // 3. Reference Provider (Shift+F12) - fast in-memory search
   context.subscriptions.push(
-    vscode.languages.registerReferenceProvider(selector, refProvider)
+    vscode.languages.registerReferenceProvider(selector, new VbReferenceProvider())
   );
 
-  // 3. CodeLens Provider (Usage count)
+  // 4. CodeLens Provider - instant reference badges
   const codeLensProvider = new VbCodeLensProvider();
   context.subscriptions.push(
     vscode.languages.registerCodeLensProvider(selector, codeLensProvider)
   );
 
-  // Refresh CodeLens when a document is saved or config changes
+  // 5. Update index when a file is saved
   context.subscriptions.push(
-    vscode.workspace.onDidSaveTextDocument((doc) => {
+    vscode.workspace.onDidSaveTextDocument(async (doc) => {
       if (vscode.languages.match(selector, doc)) {
+        await indexManager.indexFile(doc.uri);
         codeLensProvider.refresh();
       }
     })
   );
 
+  // 6. Manual refresh command
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('vbDefinitionNavigator')) {
-        codeLensProvider.refresh();
-      }
-    })
-  );
-
-  // 4. Command to manually refresh CodeLens
-  context.subscriptions.push(
-    vscode.commands.registerCommand('vbDefinitionNavigator.refreshCodeLens', () => {
+    vscode.commands.registerCommand('vbDefinitionNavigator.reindexWorkspace', async () => {
+      await indexManager.initialize(context);
       codeLensProvider.refresh();
-      vscode.window.showInformationMessage('VB CodeLens references refreshed.');
+      vscode.window.showInformationMessage('VB Workspace Index refreshed.');
     })
   );
 }
