@@ -83,7 +83,7 @@ export class WorkspaceIndexManager {
   public async indexFile(uri: vscode.Uri): Promise<void> {
     try {
       const bytes = await vscode.workspace.fs.readFile(uri);
-      const content = Buffer.from(bytes).toString('utf8');
+      const content = new TextDecoder('utf-8').decode(bytes);
       const lines = content.split(/\r?\n/);
       const rawLower = content.toLowerCase();
 
