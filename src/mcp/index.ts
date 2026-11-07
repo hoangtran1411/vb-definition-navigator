@@ -64,8 +64,18 @@ USAGE:
     process.exit(0);
   }
 
-  const workspace = args[2] ? path.resolve(args[2]) : process.cwd();
-  await ensureIndexed(workspace);
+  let targetWorkspace = process.cwd();
+  if (firstArg === '--list') {
+    if (args[1] && !args[1].startsWith('-')) {
+      targetWorkspace = path.resolve(args[1]);
+    }
+  } else if (firstArg === '--def' || firstArg === '--refs') {
+    if (args[2] && !args[2].startsWith('-')) {
+      targetWorkspace = path.resolve(args[2]);
+    }
+  }
+
+  await ensureIndexed(targetWorkspace);
 
   if (firstArg === '--def') {
     const symbol = args[1];
