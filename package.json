@@ -19,6 +19,9 @@
     "onLanguage:vba"
   ],
   "main": "./out/extension.js",
+  "bin": {
+    "vb-mcp-server": "./out/mcp/index.js"
+  },
   "contributes": {
     "languages": [
       {
@@ -84,11 +87,15 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "watch": "tsc -watch -p ./",
+    "mcp": "node ./out/mcp/index.js"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2"
   }
 }

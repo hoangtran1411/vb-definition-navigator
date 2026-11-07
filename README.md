@@ -131,6 +131,58 @@ Press `Ctrl + Shift + P` (or right-click with selected text):
 
 ---
 
+## 🤖 AI Agents & MCP Server Integration
+
+This extension ships with a built-in, standalone **Model Context Protocol (MCP)** server and CLI tool. It allows external AI Agents (Claude Desktop, Cursor, Antigravity, Serena, etc.) to leverage sub-millisecond $O(1)$ definition lookups and reference indexing on legacy VB projects **without needing VS Code running or open network ports**.
+
+### 1. Configure in Claude Desktop / Cursor / Antigravity MCP
+
+Add the following to your MCP configuration (e.g., `claude_desktop_config.json` or `gemini.json`):
+
+```json
+{
+  "mcpServers": {
+    "vb-navigator": {
+      "command": "node",
+      "args": [
+        "E:/Workspace/Dev/tools/vs-code-extension/vb-definition-navigator/out/mcp/index.js",
+        "E:/path/to/your/vb-project"
+      ]
+    }
+  }
+}
+```
+
+### 2. Available MCP Tools for AI Agents
+
+| Tool | Description |
+|------|-------------|
+| `vb_find_definition` | $O(1)$ instant lookup of procedure signature, parameters, docstrings, file, and line number. |
+| `vb_find_references` | Finds all call sites across the workspace (excluding comments and string literals). |
+| `vb_list_symbols` | Lists all procedures and properties in a file or the whole workspace. |
+| `vb_convert_vni` | Bidirectional converter between Access 97 VNI-Windows encoding and standard Unicode UTF-8. |
+| `vb_reindex` | Forces a background re-index of the active workspace. |
+
+### 3. Standalone CLI Usage (Terminal & Scripts)
+
+You can also query the indexing engine directly from bash / PowerShell:
+
+```pwsh
+# Find definition of a procedure
+node out/mcp/index.js --def CalculateSalary E:/path/to/vb-project
+
+# Find all references (ignoring comments/strings)
+node out/mcp/index.js --refs CalculateSalary E:/path/to/vb-project
+
+# List all procedures in workspace
+node out/mcp/index.js --list E:/path/to/vb-project
+
+# Convert VNI-Windows text to UTF-8
+node out/mcp/index.js --vni "Tieàn löông"
+```
+
+---
+
 ## ⚙️ Extension Settings
 
 | Setting | Type | Default | Description |

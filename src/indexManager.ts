@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { PROCEDURE_DECLARATION_REGEX, escapeRegex, getWorkspaceFileGlob, isInsideComment } from './utils';
+import { PROCEDURE_DECLARATION_REGEX, escapeRegex, getWorkspaceFileGlob, isInsideComment, isInsideString } from './utils';
 
 export interface CachedFile {
   uri: vscode.Uri;
@@ -210,7 +210,7 @@ export class WorkspaceIndexManager {
         while ((match = usageRegex.exec(lineText)) !== null) {
           const matchCol = match.index;
 
-          if (isInsideComment(lineText, matchCol)) {
+          if (isInsideComment(lineText, matchCol) || isInsideString(lineText, matchCol)) {
             continue;
           }
 

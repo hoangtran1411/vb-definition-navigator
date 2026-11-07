@@ -18,6 +18,11 @@ This document captures the technical architecture, performance engineering princ
    - [5.5 Access 97 VNI ↔ UTF-8 Bidirectional Translation](#55-access-97-vni--utf-8-bidirectional-translation)
 6. [Key Reusable Patterns for VS Code Extensions](#6-key-reusable-patterns-for-vs-code-extensions)
 7. [Offline Packaging & Distribution (.VSIX)](#7-offline-packaging--distribution-vsix)
+8. [AI Agent Integration & MCP Architecture Blueprint](#8-ai-agent-integration--mcp-architecture-blueprint)
+   - [8.1 The Mindset: Breaking Out of the IDE "Walled Garden"](#81-the-mindset-breaking-out-of-the-ide-walled-garden)
+   - [8.2 Architectural Blueprint: The 3-Tier Decoupling Pattern](#82-architectural-blueprint-the-3-tier-decoupling-pattern)
+   - [8.3 Step-by-Step Technical Replication Guide](#83-step-by-step-technical-replication-guide)
+   - [8.4 Critical Engineering Gotchas in MCP Server Development](#84-critical-engineering-gotchas-in-mcp-server-development)
 
 ---
 
@@ -303,8 +308,207 @@ npx @vscode/vsce package --no-git-tag-version
 
 ### Installing the `.vsix` on any machine:
 ```pwsh
-code --install-extension vb-definition-navigator-0.2.0.vsix
+code --install-extension vb-definition-navigator-0.3.0.vsix
 ```
 
 Or via VS Code GUI:
 - Open **Extensions** (`Ctrl+Shift+X`) $\rightarrow$ Click `...` $\rightarrow$ **Install from VSIX...**
+
+---
+
+## 8. AI Agent Integration & MCP Architecture Blueprint
+
+As AI programming agents (such as Antigravity, Claude Code, Cursor, Serena, and Windsurf) become central to developer workflows, language tooling must evolve beyond interactive GUI-only extensions. Legacy language projects (VB6, VBA, COBOL, FoxPro) are frequently explored and refactored by AI agents, yet agents cannot press `F12` or view CodeLens badges in VS Code.
+
+This section documents the **mindset**, **architectural design patterns**, and **step-by-step technical implementation** to transform any VS Code language extension into an AI-ready **Model Context Protocol (MCP)** server without over-engineering.
+
+---
+
+### 8.1 The Mindset: Breaking Out of the IDE "Walled Garden"
+
+#### The Problem: Extension Host Isolation
+Traditional VS Code extensions operate in an isolated process called the **Extension Host**. All symbol indices, parsed metadata, and caches reside in this process's private RAM. When an AI Agent or MCP server (like Serena) runs, it executes as an external operating system process.
+- **Process Barrier**: An external agent process cannot inspect or access memory inside the VS Code Extension Host.
+- **Runtime Lock-in**: Code relying directly on `import * as vscode from 'vscode'` cannot be executed outside VS Code. Running `node out/extension.js` from the command line crashes immediately with `Cannot find module 'vscode'`.
+
+#### The Architectural Trap: Over-Engineering vs Pragmatic MCP
+When developers attempt to expose IDE tooling to agents, they often fall into two opposite traps:
+1. **The Overkill Trap (Full LSP Rewrite)**: Rewriting the entire extension into a full Language Server Protocol (LSP) daemon (`vscode-languageserver`). While LSP is standard for editor integrations, it introduces immense protocol overhead (document synchronization protocols, capabilities negotiation, diagnostics polling, URI translation). For AI agents, 95% of LSP complexity is dead weight; agents merely need atomic tool queries: *"Where is symbol X defined?"* and *"Where is X used?"*.
+2. **The Fragile Hack (In-Extension Local HTTP Server)**: Opening a local Express/HTTP port inside the VS Code extension. This fails whenever VS Code is closed, suffers from port collision, requires CORS/firewall handling, and leaves dangling sockets.
+
+#### The Pragmatic Sweet Spot: The Headless Engine + Stdio MCP
+The optimal architecture decouples the indexing engine into a **pure Node.js headless core** and wraps it in a **local Model Context Protocol (MCP)** server communicating via standard input/output (`stdio`):
+
+| Property | Full LSP Rewrite | Local HTTP in VS Code | Headless Stdio MCP (Our Approach) |
+|---|---|---|---|
+| **Architecture Complexity** | High (50+ protocol messages) | Medium (Networking, HTTP) | **Low & Controlled (~150 LOC)** |
+| **Requires VS Code Open?** | No | Yes (Fails if closed) | **No (Runs independently anywhere)** |
+| **Network / Firewall / Ports** | None | Requires open TCP port | **Zero open ports (OS stdio pipe)** |
+| **Cloud / Hosting Required?** | No | No | **100% Local (Spawned as child process)** |
+| **AI Agent Compatibility** | Requires LSP client bridge | Custom HTTP prompts | **Native (Claude, Cursor, Antigravity, Serena)** |
+
+---
+
+### 8.2 Architectural Blueprint: The 3-Tier Decoupling Pattern
+
+To make language tooling reusable across both human IDEs and AI Agents, structure the codebase into three decoupled layers:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                          CONSUMER LAYER                                │
+│   ┌───────────────────────────────┐  ┌──────────────────────────────┐  │
+│   │    VS Code Extension Host     │  │   External AI Agent (MCP)    │  │
+│   │  (Interactive Human Dev UI)   │  │  (Claude, Serena, Cursor)   │  │
+│   └───────────────┬───────────────┘  └──────────────┬───────────────┘  │
+└───────────────────┼─────────────────────────────────┼──────────────────┘
+                    ▼                                 ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                          ADAPTER LAYER                                 │
+│   ┌───────────────────────────────┐  ┌──────────────────────────────┐  │
+│   │   VS Code Providers           │  │   Stdio MCP Server & CLI     │  │
+│   │   • DefinitionProvider (F12)  │  │   • ListToolsRequestSchema   │  │
+│   │   • ReferenceProvider         │  │   • CallToolRequestSchema    │  │
+│   │   • CodeLens / Hover          │  │   • Direct CLI Flag Router   │  │
+│   │   (Wraps output into          │  │   (Wraps output into         │  │
+│   │    vscode.Location/Uri)       │  │    JSON text content)        │  │
+│   └───────────────┬───────────────┘  └──────────────┬───────────────┘  │
+└───────────────────┼─────────────────────────────────┼──────────────────┘
+                    ▼                                 ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                     HEADLESS CORE ENGINE LAYER                         │
+│                    (Zero 'vscode' Dependencies)                        │
+│   ┌────────────────────────────────────────────────────────────────┐   │
+│   │ • VbEngine: Pure fs.promises workspace scanner & in-memory Map │   │
+│   │ • vbParser: Pure regex lexing, isInsideComment, isInsideString │   │
+│   │ • vniConverter: Pure string manipulation & encoding tables     │   │
+│   └────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 8.3 Step-by-Step Technical Replication Guide
+
+If you are building or modernizing an extension for another language, follow these exact 4 steps:
+
+#### Step 1: Strip `vscode` Primitives from the Core Engine
+Ensure all core data types use plain JavaScript primitives instead of VS Code classes:
+
+```typescript
+// ❌ Anti-pattern (Coupled to VS Code runtime):
+import * as vscode from 'vscode';
+interface ProcedureInfo {
+  location: vscode.Location;
+  uri: vscode.Uri;
+}
+
+// ✅ Clean Pattern (Headless & Portable):
+interface ProcedureInfo {
+  filePath: string;
+  relativePath: string;
+  line: number;      // 1-based line number for human/AI reading
+  column: number;    // 0-based character column
+  signature: string;
+  parameters: string[];
+  docComments: string[];
+}
+```
+Use `fs.promises.readFile` and `fs.promises.readdir` for file operations. The VS Code extension can simply map these plain objects to `new vscode.Location(vscode.Uri.file(info.filePath), new vscode.Position(info.line - 1, info.column))`.
+
+#### Step 2: Implement Accurate Lexical State Tracking
+Naive regex matches cause false positives by matching identifiers inside comments or strings. Implement lightweight character-scanning state machines:
+
+```typescript
+// Detects if a match falls inside a string literal (accounting for escaped quotes `""`)
+export function isInsideString(lineText: string, matchIndex: number): boolean {
+  let inString = false;
+  for (let i = 0; i < lineText.length; i++) {
+    if (i >= matchIndex) return inString;
+    if (lineText[i] === '"') {
+      if (inString && i + 1 < lineText.length && lineText[i + 1] === '"') {
+        i++; // skip escaped quote in VB
+        continue;
+      }
+      inString = !inString;
+    }
+  }
+  return inString;
+}
+```
+
+#### Step 3: Implement the Stdio MCP Server
+Install `@modelcontextprotocol/sdk` and wire up the stdio transport:
+
+```typescript
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+
+const server = new Server(
+  { name: 'vb-definition-navigator', version: '0.3.0' },
+  { capabilities: { tools: {} } }
+);
+
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: [
+    {
+      name: 'vb_find_definition',
+      description: 'Instantly locates the declaration, signature, docstrings, and location of a VB/VBA procedure using O(1) in-memory index.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          symbol: { type: 'string', description: 'Procedure name' },
+          workspace: { type: 'string', description: 'Project root directory' }
+        },
+        required: ['symbol']
+      }
+    }
+  ]
+}));
+
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  if (request.params.name === 'vb_find_definition') {
+    const symbol = String(request.params.arguments?.symbol);
+    const defs = engine.getDefinitions(symbol);
+    return {
+      content: [{ type: 'text', text: JSON.stringify(defs, null, 2) }]
+    };
+  }
+  throw new Error(`Unknown tool: ${request.params.name}`);
+});
+
+const transport = new StdioServerTransport();
+await server.connect(transport);
+```
+
+#### Step 4: Add the Dual-Mode CLI Router
+Allow the exact same binary to function either as an MCP server or as a standalone CLI for quick testing:
+
+```typescript
+const args = process.argv.slice(2);
+if (args[0] === '--def') {
+  // Standalone CLI Mode: output human/JSON text to stdout and exit
+  console.log(JSON.stringify(engine.getDefinitions(args[1]), null, 2));
+  process.exit(0);
+}
+
+// No CLI flag? Start MCP Server on stdio
+await startMcpServer();
+```
+
+---
+
+### 8.4 Critical Engineering Gotchas in MCP Server Development
+
+1. **🚨 The `stdout` Poisoning Bug (Fatal in MCP)**:
+   - In an MCP stdio server, `process.stdout` is strictly reserved for JSON-RPC framed packets.
+   - **Never call `console.log()`** inside MCP request handlers or indexing routines! Any extraneous string written to stdout will corrupt JSON-RPC framing and cause the MCP client to drop the connection.
+   - **Rule**: All diagnostics, progress, and error logging MUST use `console.error(...)` (which routes safely to `stderr`).
+
+2. **Memory Efficiency with Raw Lowercase Strings**:
+   - Instead of storing duplicate parsed AST nodes for every line in the workspace, store raw lines alongside an in-memory normalized lowercase string (`rawLower`).
+   - Use `rawLower.includes(symbolLower)` as a sub-microsecond pre-filter before executing regular expressions. This technique allows a 100,000-line legacy VB project to be indexed in under 50MB of RAM.
+
+3. **Workspace Path Resolution & Cold Starts**:
+   - AI Agents often execute across varied working directories. Always resolve relative workspace paths to absolute paths (`path.resolve()`).
+   - Lazily index the workspace on the first tool call (`ensureIndexed(workspace)`) and keep the index resident in memory for subsequent queries within the same agent session.
