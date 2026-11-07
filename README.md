@@ -135,9 +135,21 @@ Press `Ctrl + Shift + P` (or right-click with selected text):
 
 This extension ships with a built-in, standalone **Model Context Protocol (MCP)** server and CLI tool. It allows external AI Agents (Claude Desktop, Cursor, Antigravity, Serena, etc.) to leverage sub-millisecond $O(1)$ definition lookups and reference indexing on legacy VB projects **without needing VS Code running or open network ports**.
 
-### 1. Configure in Claude Desktop / Cursor / Antigravity MCP
+### 1. Quick Setup via PowerShell Script
 
-Add the following to your MCP configuration (e.g., `claude_desktop_config.json` or `gemini.json`):
+Run the automated registration script to configure Antigravity, Claude Desktop, or Cursor instantly:
+
+```pwsh
+# Auto-detect installed clients and configure for your VB project:
+.\register-mcp.ps1 -WorkspacePath "E:\path\to\your\vb-project"
+
+# Or preview without making changes:
+.\register-mcp.ps1 -DryRun
+```
+
+### 2. Manual Configuration (Claude Desktop / Cursor / Antigravity)
+
+Add the following to your MCP configuration (e.g., `claude_desktop_config.json` or `mcp_config.json`):
 
 ```json
 {
@@ -153,7 +165,7 @@ Add the following to your MCP configuration (e.g., `claude_desktop_config.json` 
 }
 ```
 
-### 2. Available MCP Tools for AI Agents
+### 3. Available MCP Tools for AI Agents
 
 | Tool | Description |
 |------|-------------|
@@ -163,7 +175,7 @@ Add the following to your MCP configuration (e.g., `claude_desktop_config.json` 
 | `vb_convert_vni` | Bidirectional converter between Access 97 VNI-Windows encoding and standard Unicode UTF-8. |
 | `vb_reindex` | Forces a background re-index of the active workspace. |
 
-### 3. Standalone CLI Usage (Terminal & Scripts)
+### 4. Standalone CLI Usage (Terminal & Scripts)
 
 You can also query the indexing engine directly from bash / PowerShell:
 
@@ -206,7 +218,7 @@ You can customize these in your `settings.json`:
 No Azure account, marketplace registration, or credit card required:
 
 ```pwsh
-code --install-extension vb-definition-navigator-0.3.0.vsix
+code --install-extension vb-definition-navigator-0.4.0.vsix
 ```
 
 ### Build from Source

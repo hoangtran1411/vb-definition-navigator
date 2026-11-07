@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "vb-navigator": {
+      "command": "node",
+      "args": [
+        "E:/Workspace/Dev/tools/vs-code-extension/vb-definition-navigator/out/mcp/index.js",
+        "E:/Workspace/Dev/tools/vs-code-extension/vb-definition-navigator/test/fixtures"
+      ]
+    }
+  }
+}

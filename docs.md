@@ -445,7 +445,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 const server = new Server(
-  { name: 'vb-definition-navigator', version: '0.3.0' },
+  { name: 'vb-definition-navigator', version: '0.4.0' },
   { capabilities: { tools: {} } }
 );
 
