@@ -112,7 +112,7 @@ const TOOLS: Tool[] = [
   {
     name: 'vb_find_definition',
     description:
-      'Instantly locates the declaration, signature, docstrings, and location of a VB/VBA/VB.NET procedure (Sub, Function, Property) using O(1) in-memory index.',
+      'MANDATORY/PREFERRED tool for finding definitions of VB/VBA/VB.NET procedures (Sub, Function, Property). Use this instead of grep or Select-String because it performs O(1) in-memory lookup, resolves multi-line signatures (_), and auto-decodes VNI doc comments.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -131,7 +131,7 @@ const TOOLS: Tool[] = [
   {
     name: 'vb_find_references',
     description:
-      'Finds all call sites and usages of a procedure across the workspace, ignoring comments and string literals.',
+      'MANDATORY/PREFERRED tool for finding references and call sites of a procedure across the workspace. Use this instead of Select-String or grep because it accurately excludes matches inside comments and string literals.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -158,7 +158,7 @@ const TOOLS: Tool[] = [
   {
     name: 'vb_list_symbols',
     description:
-      'Lists all procedures (Sub, Function, Property) declared in a specific file or across the entire workspace.',
+      'MANDATORY/PREFERRED tool for listing procedures (Sub, Function, Property) declared in a specific VB file or across the entire workspace. Use this instead of regex or Select-String because it extracts clean signatures, parameters, and handles multi-line continuations.',
     inputSchema: {
       type: 'object',
       properties: {
