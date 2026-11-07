@@ -1,6 +1,7 @@
 node_modules/
 out/
 dist/
+dist-mcp/
 *.vsix
 .DS_Store
 .vscode-test/

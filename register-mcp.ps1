@@ -59,8 +59,19 @@ if ([string]::IsNullOrWhiteSpace($WorkspacePath)) {
 $mcpScriptNormalized = ($mcpServerScript -replace '\\', '/')
 $workspaceNormalized = ($WorkspacePath -replace '\\', '/')
 
-Write-Host "`n[*] MCP Server : " -NoNewline -ForegroundColor Gray
+$geminiToolPath = Join-Path $env:USERPROFILE ".gemini\tools\vb-navigator\index.js"
+if (Test-Path $geminiToolPath) {
+    $geminiScriptNormalized = ($geminiToolPath -replace '\\', '/')
+} else {
+    $geminiScriptNormalized = $mcpScriptNormalized
+}
+
+Write-Host "`n[*] Local Server : " -NoNewline -ForegroundColor Gray
 Write-Host $mcpScriptNormalized -ForegroundColor Green
+if (Test-Path $geminiToolPath) {
+    Write-Host "[*] Gemini Tool  : " -NoNewline -ForegroundColor Gray
+    Write-Host $geminiScriptNormalized -ForegroundColor Cyan
+}
 Write-Host "[*] Target VB Dir: " -NoNewline -ForegroundColor Gray
 Write-Host $workspaceNormalized -ForegroundColor Green
 
@@ -69,6 +80,14 @@ $serverConfig = [ordered]@{
     "command" = "node"
     "args" = @(
         $mcpScriptNormalized,
+        $workspaceNormalized
+    )
+}
+
+$geminiServerConfig = [ordered]@{
+    "command" = "node"
+    "args" = @(
+        $geminiScriptNormalized,
         $workspaceNormalized
     )
 }
@@ -155,7 +174,8 @@ if ($Client -eq "ExportOnly") {
         }
 
         if ($shouldUpdate) {
-            Update-McpConfig -ClientName $clientName -FilePath $configPath -NewServerConfig $serverConfig
+            $cfg = if ($clientName -eq "Antigravity") { $geminiServerConfig } else { $serverConfig }
+            Update-McpConfig -ClientName $clientName -FilePath $configPath -NewServerConfig $cfg
         }
     }
 }

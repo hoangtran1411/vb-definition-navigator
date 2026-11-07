@@ -88,7 +88,8 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "mcp": "node ./out/mcp/index.js"
+    "mcp": "node ./out/mcp/index.js",
+    "bundle:mcp": "esbuild src/mcp/index.ts --bundle --platform=node --target=node20 --outfile=dist-mcp/vb-mcp-server.js"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
