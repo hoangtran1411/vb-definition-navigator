@@ -47,10 +47,7 @@ export const VNI_TO_UNICODE_MAP: Record<string, string> = {
   'yø': 'ỳ', 'yù': 'ý', 'yû': 'ỷ', 'yõ': 'ỹ', 'yï': 'ỵ',
 
   // đ / Đ
-  'ñ': 'đ', 'Ñ': 'Đ',
-
-  // i with marks
-  'ì': 'ì', 'í': 'í'
+  'ñ': 'đ', 'Ñ': 'Đ'
 };
 
 // Sorted by length descending for greedy replacement

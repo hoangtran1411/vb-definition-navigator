@@ -60,15 +60,12 @@ $mcpScriptNormalized = ($mcpServerScript -replace '\\', '/')
 $workspaceNormalized = ($WorkspacePath -replace '\\', '/')
 
 $geminiToolPath = Join-Path $env:USERPROFILE ".gemini\tools\vb-navigator\index.js"
-if (Test-Path $geminiToolPath) {
-    $geminiScriptNormalized = ($geminiToolPath -replace '\\', '/')
-} else {
-    $geminiScriptNormalized = $mcpScriptNormalized
-}
+$hasGeminiTool = Test-Path $geminiToolPath
+$geminiScriptNormalized = if ($hasGeminiTool) { ($geminiToolPath -replace '\\', '/') } else { $mcpScriptNormalized }
 
 Write-Host "`n[*] Local Server : " -NoNewline -ForegroundColor Gray
 Write-Host $mcpScriptNormalized -ForegroundColor Green
-if (Test-Path $geminiToolPath) {
+if ($hasGeminiTool) {
     Write-Host "[*] Gemini Tool  : " -NoNewline -ForegroundColor Gray
     Write-Host $geminiScriptNormalized -ForegroundColor Cyan
 }
@@ -80,14 +77,6 @@ $serverConfig = [ordered]@{
     "command" = "node"
     "args" = @(
         $mcpScriptNormalized,
-        $workspaceNormalized
-    )
-}
-
-$geminiServerConfig = [ordered]@{
-    "command" = "node"
-    "args" = @(
-        $geminiScriptNormalized,
         $workspaceNormalized
     )
 }
@@ -174,7 +163,8 @@ if ($Client -eq "ExportOnly") {
         }
 
         if ($shouldUpdate) {
-            $cfg = if ($clientName -eq "Antigravity") { $geminiServerConfig } else { $serverConfig }
+            $script = if ($clientName -eq "Antigravity") { $geminiScriptNormalized } else { $mcpScriptNormalized }
+            $cfg = [ordered]@{ "command" = "node"; "args" = @($script, $workspaceNormalized) }
             Update-McpConfig -ClientName $clientName -FilePath $configPath -NewServerConfig $cfg
         }
     }

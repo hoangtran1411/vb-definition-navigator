@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { WorkspaceIndexManager } from './indexManager';
+import { extractDocComments, extractSignature } from './core/vbParser';
 import { looksLikeVni, vniToUnicode } from './vniConverter';
 
 export class VbHoverProvider implements vscode.HoverProvider {
@@ -56,29 +57,9 @@ export class VbHoverProvider implements vscode.HoverProvider {
       return null;
     }
 
-    // Extract signature (handling line continuations with ' _')
-    let signature = lines[defLineIndex].trim();
-    let currentLine = defLineIndex;
-    while (signature.endsWith('_') && currentLine + 1 < lines.length) {
-      currentLine++;
-      const nextLine = lines[currentLine].trim();
-      signature = signature.slice(0, -1).trim() + ' ' + nextLine;
-    }
-
-    // Extract preceding doc comments (auto-decode if VNI encoded)
-    const docComments: string[] = [];
-    for (let i = defLineIndex - 1; i >= 0; i--) {
-      const lineTrim = lines[i].trim();
-      if (lineTrim.startsWith('\'') || /^Rem\b/i.test(lineTrim)) {
-        let clean = lineTrim.replace(/^('|\bRem\b)\s*/i, '');
-        if (looksLikeVni(clean)) {
-          clean = `${vniToUnicode(clean)} *(VNI decoded)*`;
-        }
-        docComments.unshift(clean);
-      } else {
-        break;
-      }
-    }
+    // Extract signature and preceding doc comments using core parser
+    const { signature } = extractSignature(lines, defLineIndex);
+    const docComments = extractDocComments(lines, defLineIndex);
 
     const md = new vscode.MarkdownString();
     md.isTrusted = true;

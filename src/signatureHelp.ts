@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { WorkspaceIndexManager } from './indexManager';
+import { extractSignature, parseParameters } from './core/vbParser';
 
 /**
  * Provides Parameter Hints when typing procedure calls like `CalculateSalary(` or `DoSomething(a, `
@@ -34,22 +35,15 @@ export class VbSignatureHelpProvider implements vscode.SignatureHelpProvider {
       return null;
     }
 
-    const signatureRaw = lines[targetLoc.range.start.line].trim();
-
-    // 3. Extract parameter list inside parentheses: `(ByVal id As Long, bonus As Currency)`
-    const paramMatch = /\(([^)]*)\)/.exec(signatureRaw);
-    if (!paramMatch) {
+    const { signature } = extractSignature(lines, targetLoc.range.start.line);
+    const paramList = parseParameters(signature);
+    if (paramList.length === 0) {
       return null;
     }
 
-    const rawParams = paramMatch[1].trim();
-    const paramList = rawParams.length > 0
-      ? rawParams.split(',').map((p) => p.trim())
-      : [];
-
-    // 4. Construct VS Code SignatureHelp
+    // 3. Construct VS Code SignatureHelp
     const sigHelp = new vscode.SignatureHelp();
-    const sigInfo = new vscode.SignatureInformation(signatureRaw);
+    const sigInfo = new vscode.SignatureInformation(signature);
 
     sigInfo.parameters = paramList.map((paramStr) => {
       return new vscode.ParameterInformation(paramStr);
